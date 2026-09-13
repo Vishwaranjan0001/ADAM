@@ -41,7 +41,7 @@ jobs:
       - name: Verify CLI Doctor & Bootstrap
         run: |
           adam dev doctor
-          adam dev bootstrap --pages 2
+          adam dev bootstrap
 
       - name: Run Primary Acceptance Tests (Phase 09)
         run: |
