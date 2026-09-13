@@ -4,6 +4,76 @@
 
 ADAM is a platform for turning approved Uttarakhand public records into a connected, queryable knowledge base — not a single assistant, but the infrastructure behind one. Connect your data and ADAM's ingestion pipelines take care of getting it into the database; choose which models power your workspace, local or API-based; and bring your organization on board with shared access for its members. ADAM runs local-first by default, with the option to connect hosted model APIs where that fits your deployment. Under the hood: a FastAPI backend, a Next.js web interface, PostgreSQL/pgvector persistence, document ingestion, OCR support, and local or API-based model and voice services.
 
+## Technology Stack
+
+### Backend & API
+
+- **Language/runtime:** Python 3.10+ (Docker image built on `python:3.11-slim`)
+- **Web framework:** FastAPI, served by Uvicorn (`standard` extras — uvloop, httptools)
+- **Two API surfaces, deliberately separate:**
+  - `/api/*` — the app-facing surface behind the Next.js UI, including the streaming chat endpoint (`POST /api/chat`, Server-Sent Events: `start` → `token` → `citations` → `banners`/`suggestions` → `done`)
+  - `/v1/*` — a stricter external gateway contract (`chat`, `documents`, `search`, `ingestions`, `feedback`) with OpenAPI/JSON Schema validation, idempotency keys on writes, per-user rate limiting, and structured, non-disclosing error responses
+- **Validation:** Pydantic v2
+- **CLI:** Click (the `adam` command — serving, dev diagnostics, model management, review workflows)
+
+### Data layer
+
+- **Database:** PostgreSQL 16 via the `pgvector/pgvector:pg16` image — one database serves both relational records and vector search, no separate vector store to operate
+- **ORM/driver:** SQLAlchemy 2.0 + psycopg3 (binary)
+- **Retrieval:** hybrid search combining PostgreSQL full-text/BM25 with pgvector similarity, filtered by department and clearance-level ACLs *before* ranking; an optional cross-encoder reranker sits on top of that when benchmarks justify it
+- **Original document storage:** a local filesystem backend by default (`STORAGE_DIR`), built to swap to an S3-compatible backend for production without changing calling code
+
+### Model & agent layer
+
+- **Local inference:** Ollama, via an `OllamaModelRuntime` — `qwen2.5:3b` is the default pulled model, with `qwen3:4b` (Apache-2.0) as the primary target and `qwen3:1.7b` kept as a low-memory fallback
+- **Model governance:** a `ModelRegistry` tracks approved model artifacts (checksums, licenses, promotion gates); a `SingleModelLifecycleManager` enforces exactly one active model instance at a time — no silently running multiple LLMs concurrently
+- **Graceful degradation:** a deterministic (non-LLM) runtime path takes over when no Ollama model is reachable, so the system degrades instead of failing outright
+- **Agent orchestration:** a bounded, seven-stage state machine per query, with abstention on unanswerable questions, temperature/token bounds, and an audited execution trail; tools available to the agent are explicitly allow-listed, and unregistered tools are rejected
+- **Hosted API models:** supported as an alternative or addition to local Ollama models, for deployments that prefer or require it
+
+### Document processing & OCR
+
+- **PDF parsing:** PyMuPDF for born-digital text extraction, page rendering, and page-count verification
+- **OCR:** Tesseract (with `tesseract-ocr-hin` for Devanagari) as the default engine; PaddleOCR supported for harder bilingual/layout-heavy scans, run as a queued worker rather than inline with chat requests
+- **Image handling:** Pillow, with deskew/rotation/preprocessing gated behind quality checks rather than applied unconditionally
+- **Quality gates:** automatic flags for low OCR confidence, low character yield, mixed-script uncertainty, tables, seals/signatures, handwritten content, and contradictory extracted-vs-OCR text — flagged pages require human review before they enter chunking
+- **Precedent/supersession detection:** a bilingual (Hindi + English) parser that identifies when one order supersedes, amends, or continues another, feeding the "this GO may be outdated" warnings shown to officers
+
+### Voice
+
+- **Speech-to-text:** Fast Whisper (`faster-whisper`) — an optional install (`pip install -e ".[voice]"`, bundled into the Docker image)
+- **Text-to-speech:** Piper
+- Both fall back to a "null engine" so voice features report as unavailable rather than crashing the app when the underlying dependency isn't installed
+
+### Frontend
+
+- **Framework:** Next.js 14 (React 18, TypeScript)
+- **Styling:** Tailwind CSS
+- **Icons:** lucide-react
+
+### Security & governance
+
+- Role/clearance-based access control (`X-User-Role`, `X-Clearance-Level` request headers) enforced at the retrieval layer, not just the UI
+- Document-embedded prompt-injection detection and quarantining before content reaches the model
+- Upload validation: magic-byte/format checks, executable (PE/ELF) rejection, suspicious embedded-PDF-action detection
+- XSS detection and sanitization on both ingested and generated content
+- Secrets and system-prompt redaction in logs and error responses
+- Signed, tamper-evident audit manifests over the document inventory
+- "Stealth" 404s — unauthorized requests get a not-found response rather than a message revealing that a restricted resource exists
+- Session memory encrypted at rest, isolated per user, with TTL-based expiry and audited purge/delete
+
+### Testing
+
+pytest + pytest-cov, organized into layers: unit (metadata, hashing, chunk boundaries, ACL predicates), contract (OpenAPI conformance, auth/error non-disclosure), corpus (golden PDFs, Hindi/English, tables, corrupted files), RAG quality (gold question sets, no-answer/abstention cases, citation precision), security (RBAC, injection, upload attacks), and end-to-end integration/acceptance tests covering the full pipeline from PDF to cited chat answer.
+
+### Deployment & infrastructure
+
+- Docker Compose for local development (hot-reloading API and UI), with a separate `docker-compose.prod.yml` overlay for immutable production images
+- Multi-stage Dockerfile (`python:3.11-slim` base; `development`/`production` targets)
+- Resource profiles (`adam dev profile`) with defined RAM/disk budgets for three target environments: an 8GB MacBook Air pilot, a team dev server, and government production
+- A cross-process "heavy worker" coordinator that mutually excludes resource-intensive tasks (OCR, model inference) so they don't compete for memory on constrained hardware
+- `adam dev doctor` / `adam dev bootstrap` / `adam dev cache-clean` CLI diagnostics — local environment health checks, seeding an anonymized pilot corpus, and enforcing a disk cache ceiling
+
 ## Quick start with Docker
 
 ### Prerequisites
