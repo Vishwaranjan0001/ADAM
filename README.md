@@ -41,9 +41,10 @@ ADAM is a platform for turning approved Uttarakhand public records into a connec
 
 ### Voice
 
-- **Speech-to-text:** Fast Whisper (`faster-whisper`) — an optional install (`pip install -e ".[voice]"`, bundled into the Docker image)
-- **Text-to-speech:** Piper
-- Both fall back to a "null engine" so voice features report as unavailable rather than crashing the app when the underlying dependency isn't installed
+- **Speech-to-text:** Groq-hosted Whisper large-v3 (`GROQ_API_KEY`, free tier, Hindi + English) when configured; otherwise Fast Whisper (`faster-whisper`) locally — an optional install (`pip install -e ".[voice]"`, bundled into the Docker image)
+- **Text-to-speech:** ElevenLabs multilingual voices (`ELEVENLABS_API_KEY`, free tier) when configured; otherwise Piper
+- Both fall back to a "null engine" that reports as unavailable via `GET /api/voice/status`, and the UI then uses the browser's Web Speech API — so voice works with no keys and no extra installs
+- **Conversation loop:** the Next.js UI runs a hands-free listen → answer → speak → listen cycle with silence detection, tap-to-interrupt, and Markdown/citation stripping so only the answer prose is spoken (see [Voice conversation](#voice-conversation))
 
 ### Frontend
 
