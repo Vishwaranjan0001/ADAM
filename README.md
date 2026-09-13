@@ -1,6 +1,8 @@
 # ADAM
 
-ADAM is a local-first assistant for searching and explaining approved Uttarakhand public records. It provides a FastAPI backend, a Next.js web interface, PostgreSQL/pgvector persistence, document ingestion, OCR support, and optional local model and voice services.
+*A.D.A.M. — Administrative Directive & Archival Memory.*
+
+ADAM is a platform for turning approved Uttarakhand public records into a connected, queryable knowledge base — not a single assistant, but the infrastructure behind one. Connect your data and ADAM's ingestion pipelines take care of getting it into the database; choose which models power your workspace, local or API-based; and bring your organization on board with shared access for its members. ADAM runs local-first by default, with the option to connect hosted model APIs where that fits your deployment. Under the hood: a FastAPI backend, a Next.js web interface, PostgreSQL/pgvector persistence, document ingestion, OCR support, and local or API-based model and voice services.
 
 ## Quick start with Docker
 
@@ -88,6 +90,8 @@ On Linux, `host.docker.internal` may not resolve to a host Ollama installation. 
 ## Local models and large assets
 
 Model weights, datasets, uploads, caches, and local databases are deliberately excluded from Git. They are covered by `.gitignore` and `.dockerignore`.
+
+ADAM defaults to local models so a workspace can run fully offline, but model selection is meant to be a choice, not a constraint — a workspace can point at a hosted API-based model instead of, or alongside, a local one, depending on what that deployment needs.
 
 For the default local chat model:
 
