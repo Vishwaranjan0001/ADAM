@@ -136,7 +136,7 @@ Production images do not mount application source code or the UI `node_modules` 
 
 ## Configuration
 
-Copy the template only when you need to override defaults:
+Copy the template only when you need to override defaults. Both Docker Compose and a native `adam serve` read `.env` from the repository root (values already set in the shell take precedence):
 
 ```bash
 cp .env.example .env
