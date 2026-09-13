@@ -1,0 +1,119 @@
+"""Default onboarding seed profiles for official Uttarakhand sources."""
+
+from typing import List
+from adam.ingest.registry import SourceOnboardingSheet
+from adam.vocabularies import DepartmentId, Classification, RefreshCadence
+
+
+INITIAL_SOURCES_PLAYBOOK: List[SourceOnboardingSheet] = [
+    # P0: Treasury/IFMS GOs
+    SourceOnboardingSheet(
+        id="src_ekosh_treasury_go",
+        name="Uttarakhand Treasury/IFMS Government Orders",
+        department_id=DepartmentId.FINANCE_TREASURY.value,
+        owner_name="Directorate of Treasuries and Financial Services, Uttarakhand",
+        owner_contact="director-treasury@uk.gov.in",
+        written_authority_ref="GO-FD-UK-2024-441-AUTH",
+        permitted_domains=["ekosh.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/government-orders/", "/s35314b9674c86e3f9d1ba25ef9bb32895/", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=30,
+        retention_policy="PERMANENT",
+        terms_and_conditions="Approved for state public archive and citizen assistance.",
+    ),
+    # P0: Treasury RTI manuals
+    SourceOnboardingSheet(
+        id="src_ekosh_treasury_rti",
+        name="Treasury RTI Rules and Manuals Index",
+        department_id=DepartmentId.FINANCE_TREASURY.value,
+        owner_name="State Public Information Officer, Treasury Directorate",
+        owner_contact="spio-treasury@uk.gov.in",
+        written_authority_ref="RTI-DOC-UK-2024-108",
+        permitted_domains=["ekosh.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/document-category/rti-documents-manuals/", "/s35314b9674c86e3f9d1ba25ef9bb32895/", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=20,
+        retention_policy="PERMANENT",
+        terms_and_conditions="Standard RTI proactive disclosure under Section 4(1)(b).",
+    ),
+    # P0: Rural Development documents
+    SourceOnboardingSheet(
+        id="src_ukrd_documents",
+        name="Rural Development Department Official Documents",
+        department_id=DepartmentId.RURAL_DEVELOPMENT.value,
+        owner_name="Commissioner, Rural Development, Uttarakhand",
+        owner_contact="comm-rd-uk@nic.in",
+        written_authority_ref="RD-UK-GO-2024-912",
+        permitted_domains=["ukrd.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/documents/", "/s3e9412ee564384b987d086df32d4ce6b7/", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=20,
+        retention_policy="PERMANENT",
+        terms_and_conditions="Public rural development policy, guidelines, and departmental orders.",
+    ),
+    # P1: Official e-Gazette and State Government Orders
+    SourceOnboardingSheet(
+        id="src_uk_egazette",
+        name="Uttarakhand Official e-Gazette and Government Orders Portal",
+        department_id=DepartmentId.GENERAL_ADMINISTRATION.value,
+        owner_name="Directorate of Printing and Stationery / ITDA, Uttarakhand",
+        owner_contact="gazette-uk@uk.gov.in",
+        written_authority_ref="GAZ-UK-GO-2024-001-AUTH",
+        permitted_domains=["uk.gov.in", "gazettes.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/pages/go%27s-and-gazettes", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=25,
+        retention_policy="PERMANENT",
+        terms_and_conditions="Official Uttarakhand State e-Gazette public notices and government orders.",
+    ),
+    # P1: Audit GOs
+    SourceOnboardingSheet(
+        id="src_audit_go",
+        name="Uttarakhand Audit Directorate Government Orders",
+        department_id=DepartmentId.AUDIT_DIRECTORATE.value,
+        owner_name="Director, Local Fund Audit Department, Uttarakhand",
+        owner_contact="audit-uk@gov.in",
+        written_authority_ref="AUD-UK-DIR-2024-05",
+        permitted_domains=["uttarakhandaudit.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/document-category/government-orders/", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=20,
+        retention_policy="PERMANENT",
+    ),
+    # P1: Board of Revenue documents
+    SourceOnboardingSheet(
+        id="src_bor_documents",
+        name="Board of Revenue Uttarakhand Documents",
+        department_id=DepartmentId.BOARD_OF_REVENUE.value,
+        owner_name="Secretary, Board of Revenue Uttarakhand",
+        owner_contact="bor-dehradun-uk@nic.in",
+        written_authority_ref="BOR-UK-RES-2024-301",
+        permitted_domains=["bor.uk.gov.in", "s3waas.gov.in", "cdnbbsr.s3waas.gov.in"],
+        permitted_path_prefixes=["/documents/", "/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=20,
+        retention_policy="PERMANENT",
+    ),
+    # P1: Uttarakhand OGD
+    SourceOnboardingSheet(
+        id="src_uk_ogd",
+        name="Uttarakhand Open Government Data Portal",
+        department_id=DepartmentId.OPEN_GOVERNMENT_DATA.value,
+        owner_name="ITDA / NIC Uttarakhand OGD Lead",
+        owner_contact="ogd-lead@uk.gov.in",
+        written_authority_ref="GODL-INDIA-UK-2024-001",
+        permitted_domains=["uttarakhand.data.gov.in"],
+        permitted_path_prefixes=["/catalog/", "/api/"],
+        access_classification=Classification.PUBLIC.value,
+        refresh_cadence=RefreshCadence.WEEKLY.value,
+        rate_limit_per_minute=40,
+        retention_policy="PERMANENT",
+        terms_and_conditions="Government Open Data License - India (GODL).",
+    ),
+]

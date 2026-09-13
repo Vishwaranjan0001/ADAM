@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      target: production
+    command: adam serve --host 0.0.0.0 --port 8000
+    volumes: !override
+      - adam_storage:/app/.adam_storage
+
+  ui:
+    build:
+      context: ./ui
+      target: production
+    environment:
+      NEXT_API_ORIGIN: http://api:8000
+    volumes: !override []

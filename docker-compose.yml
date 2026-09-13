@@ -1,0 +1,77 @@
+name: adam
+
+# Default: editable local development. The source folders are mounted from the
+# host and Uvicorn/Next watch for changes. Use docker-compose.prod.yml for
+# immutable production images.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-adam}
+      POSTGRES_USER: ${POSTGRES_USER:-adam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adam_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - adam_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      target: development
+    command: uvicorn adam.api.app:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/adam
+    environment:
+      ADAM_PROFILE: ${ADAM_PROFILE:-DEV_SERVER}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-adam}:${POSTGRES_PASSWORD:-adam_dev_password}@postgres:5432/${POSTGRES_DB:-adam}
+      STORAGE_DIR: /app/.adam_storage
+      SIGNING_SECRET: ${SIGNING_SECRET:-adam-local-development-only-change-me}
+      ADAM_MODEL_BACKEND: ${ADAM_MODEL_BACKEND:-ollama}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      MAX_CONTEXT_TOKENS: ${MAX_CONTEXT_TOKENS:-4096}
+      MAX_CONCURRENT_GENERATIONS: ${MAX_CONCURRENT_GENERATIONS:-1}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./adam:/app/adam
+      - ./tests:/app/tests
+      - adam_storage:/app/.adam_storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  ui:
+    build:
+      context: ./ui
+      target: development
+    environment:
+      NEXT_API_ORIGIN: http://api:8000
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${UI_PORT:-3000}:3000"
+    volumes:
+      - ./ui:/app
+      - adam_ui_node_modules:/app/node_modules
+      - adam_ui_next:/app/.next
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  adam_postgres:
+  adam_storage:
+  adam_ui_node_modules:
+  adam_ui_next:

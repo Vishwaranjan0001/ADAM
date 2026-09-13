@@ -1,0 +1,1 @@
+"""ADAM FastAPI server package."""
