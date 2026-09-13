@@ -11,21 +11,9 @@ from sqlalchemy.orm import Session
 from adam.agent.state_machine import AgentStateMachine
 from adam.api.deps import get_db, get_user_context
 from adam.model.registry import ModelRegistry
-from adam.model.runtime import OllamaModelRuntime
 from adam.rag.models import UserContext
 
 router = APIRouter()
-
-
-def _default_installed_model_id(db: Session) -> Optional[str]:
-    registry = ModelRegistry(db)
-    primary = registry.get_primary()
-    if primary and OllamaModelRuntime(primary).is_model_present():
-        return primary.id
-    for model in registry.list_all():
-        if OllamaModelRuntime(model).is_model_present():
-            return model.id
-    return None
 
 
 class ChatRequest(BaseModel):
@@ -52,15 +40,9 @@ async def chat_endpoint(
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
-            chosen_model = req.model_id or _default_installed_model_id(db)
-            if not chosen_model:
-                raise RuntimeError("No installed ADAM model is available. Install an approved model with Ollama and refresh the page.")
-            artifact = ModelRegistry(db).get(chosen_model)
-            if not artifact:
-                raise ValueError(f"Unknown model artifact '{chosen_model}'.")
-            if not OllamaModelRuntime(artifact).is_model_present():
-                raise RuntimeError(f"Model '{artifact.name}' is not installed locally and cannot be selected.")
-            agent = AgentStateMachine(db, model_id=chosen_model, backend=req.backend)
+            if req.model_id and not ModelRegistry(db).get(req.model_id):
+                raise ValueError(f"Unknown model artifact '{req.model_id}'.")
+            agent = AgentStateMachine(db, model_id=req.model_id, backend=req.backend)
 
             response = await asyncio.get_event_loop().run_in_executor(
                 None,
