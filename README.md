@@ -1,5 +1,7 @@
 # ADAM
 
+> This repository is a fork of [anuragdevcode/ADAM](https://github.com/anuragdevcode/ADAM). The documentation below describes the inherited platform; it does not establish individual authorship of every component.
+
 *A.D.A.M. — Administrative Directive & Archival Memory.*
 
 ADAM is a platform for turning approved Uttarakhand public records into a connected, queryable knowledge base — not a single assistant, but the infrastructure behind one. Connect your data and ADAM's ingestion pipelines take care of getting it into the database; choose which models power your workspace, local or API-based; and bring your organization on board with shared access for its members. ADAM runs local-first by default, with the option to connect hosted model APIs where that fits your deployment. Under the hood: a FastAPI backend, a Next.js web interface, PostgreSQL/pgvector persistence, document ingestion, OCR support, and local or API-based model and voice services.
@@ -85,7 +87,7 @@ pytest + pytest-cov, organized into layers: unit (metadata, hashing, chunk bound
 Clone the repository and start the editable development stack:
 
 ```bash
-git clone <YOUR-REPOSITORY-URL> adam
+git clone https://github.com/Vishwaranjan0001/ADAM.git adam
 cd adam
 docker compose up --build
 ```
